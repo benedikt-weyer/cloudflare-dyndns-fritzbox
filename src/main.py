@@ -4,6 +4,11 @@ import flask
 app = flask.Flask(__name__)
 
 
+@app.route('/health', methods=['GET'])
+def health():
+    return flask.jsonify({'status': 'healthy', 'service': 'cloudflare-dyndns'}), 200
+
+
 @app.route('/', methods=['GET'])
 def main():
     token = flask.request.args.get('token')
