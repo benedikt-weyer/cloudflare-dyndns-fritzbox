@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 
-# Script to generate self-signed SSL certificates for localhost
+# Script to generate self-signed SSL certificates for localhost and machine IP
 # Usage: ./generate-cert.sh
 
 set -e
 
 DOMAIN="localhost"
+MACHINE_IP="192.168.178.21"
 CERT_DIR="./certs"
 KEY_FILE="$CERT_DIR/privkey.pem"
 CERT_FILE="$CERT_DIR/cert.pem"
@@ -13,7 +14,7 @@ CERT_FILE="$CERT_DIR/cert.pem"
 # Create certs directory if it doesn't exist
 mkdir -p "$CERT_DIR"
 
-echo "Generating self-signed certificate for $DOMAIN..."
+echo "Generating self-signed certificate for $DOMAIN and $MACHINE_IP..."
 
 # Check if we have openssl available locally
 if command -v openssl >/dev/null 2>&1; then
@@ -22,8 +23,10 @@ if command -v openssl >/dev/null 2>&1; then
     openssl genrsa -out "$KEY_FILE" 2048
     echo "✓ Private key generated: $KEY_FILE"
     
-    # Generate certificate
-    openssl req -new -x509 -key "$KEY_FILE" -out "$CERT_FILE" -days 365 -subj "/C=DE/ST=State/L=City/O=Organization/CN=$DOMAIN"
+    # Create certificate with SAN for both localhost and IP
+    openssl req -new -x509 -key "$KEY_FILE" -out "$CERT_FILE" -days 365 \
+        -subj "/C=DE/ST=State/L=City/O=Organization/CN=$DOMAIN" \
+        -addext "subjectAltName=DNS:$DOMAIN,IP:$MACHINE_IP"
     echo "✓ Certificate generated: $CERT_FILE"
     
     # Set proper permissions
@@ -31,7 +34,7 @@ if command -v openssl >/dev/null 2>&1; then
     chmod 644 "$CERT_FILE"
 else
     echo "OpenSSL not found locally, using Docker..."
-    # Use Docker to generate certificates with proper user ownership
+    # Use Docker to generate certificates with SAN for both localhost and IP
     docker run --rm \
         -v "$(pwd)/certs:/certs" \
         -u "$(id -u):$(id -g)" \
@@ -39,7 +42,8 @@ else
         -keyout /certs/privkey.pem \
         -out /certs/cert.pem \
         -days 365 -nodes \
-        -subj "/C=DE/ST=State/L=City/O=Organization/CN=$DOMAIN"
+        -subj "/C=DE/ST=State/L=City/O=Organization/CN=$DOMAIN" \
+        -addext "subjectAltName=DNS:$DOMAIN,IP:$MACHINE_IP"
     
     echo "✓ Certificate generated using Docker"
     
