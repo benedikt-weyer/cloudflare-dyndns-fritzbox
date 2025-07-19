@@ -1,4 +1,4 @@
-localhost, {env.DOMAIN_NAME} {
+localhost, {$DOMAIN_NAME} {
     # Use self-signed certificate
     tls /certs/cert.pem /certs/privkey.pem
     
