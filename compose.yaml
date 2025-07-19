@@ -2,8 +2,7 @@ services:
   cloudflare-dyndns:
     container_name: cloudflare-dyndns
     build: .
-    ports:
-      - "7766:8080"
+    # Removed port mapping - now accessed through Caddy
     environment:
       - FLASK_ENV=production
     restart: unless-stopped
@@ -13,3 +12,33 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+    networks:
+      - caddy-network
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy-reverse-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"     # HTTP (will redirect to HTTPS)
+      - "443:443"   # HTTPS
+      - "443:443/udp" # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./certs:/certs:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - caddy_logs:/var/log/caddy
+    networks:
+      - caddy-network
+    depends_on:
+      - cloudflare-dyndns
+
+networks:
+  caddy-network:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
+  caddy_logs:

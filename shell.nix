@@ -3,6 +3,7 @@
 pkgs.mkShell {
   buildInputs = with pkgs; [
     python310
+    openssl
   ];
 
   shellHook = ''

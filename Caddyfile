@@ -1,0 +1,23 @@
+localhost {
+    # Use self-signed certificate
+    tls /certs/cert.pem /certs/privkey.pem
+    
+    reverse_proxy cloudflare-dyndns:8080
+    
+    # Optional: Add some headers for better security
+    header {
+        # Enable HSTS
+        Strict-Transport-Security max-age=31536000;
+        # Prevent MIME type sniffing
+        X-Content-Type-Options nosniff
+        # Prevent clickjacking
+        X-Frame-Options DENY
+        # XSS protection
+        X-XSS-Protection "1; mode=block"
+    }
+    
+    # Optional: Add logging
+    log {
+        output file /var/log/caddy/access.log
+    }
+} 
